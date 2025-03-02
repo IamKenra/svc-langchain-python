@@ -19,7 +19,8 @@ def generate_recommendation(data):
     - Disk Usage: {data.disk_usage}%
 
     Berdasarkan statistik di atas, lakukan rekomendasi untuk mengoptimalkan performa server atau server sudah berjalan optimal.
-    Anda cukup menganalisa query ini saja tidak perlu melihat data sebelumnya.
+    Gunakana bahasa indonesia yang baik dan benar. Pastikan setiap respone anda selalu **KONSISTEN SETIAP KALIMAT DAN KATA**
+    Anda cukup menganalisa pesan yang ini saja tidak perlu melihat pesan sebelumnya karena ini respone anda bersifat sekali pakai.
     Cukup highlight bagian yang perlu diperhatikan saja, conntoh jika cpu load saja yamg tinggi cukup highlight cpu load saja.
     Jika load server termasuk optimal maka cukup berikan balikan bahwa server sudah berjalan optimal.
     Berikan rekomendasi dalam format JSON berikut **tanpa tambahan teks lain**:

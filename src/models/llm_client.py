@@ -3,10 +3,8 @@ import requests
 import logging
 from dotenv import load_dotenv
 
-# Memuat variabel dari file .e
 load_dotenv()
 
-# Konfigurasi logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -29,10 +27,12 @@ class LLMClient:
                 json={
                     "model": self.model_name,
                     "prompt": prompt,
-                    "stream": False
+                    "stream": False,
+                    "temperature": 0.2,
+                    "top_p": 0.8 
                 },
                 headers={"Content-Type": "application/json"},
-                timeout=60  # Timeout lebih lama untuk model besar
+                timeout=1000  # Timeout lebih lama untuk model besar
             )
             response.raise_for_status()
 
