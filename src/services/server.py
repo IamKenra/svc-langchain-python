@@ -38,10 +38,9 @@ def generate_recommendation(data):
     **Ingat:** Hanya keluarkan JSON tanpa tambahan teks lain. Cukup berikan rekomendasi berdasarkan statistik yang diberikan tidak perlu melakuka reasoning tambahan.
     """
 
-    logger.info(f"🔍 Generating recommendation using hosted Ollama API...")
+    logger.info(f"Generating recommendation using hosted Ollama API")
     response = llm_client.predict(prompt).strip()
     
-    #ekstrak JSON dari teks
     json_text = extract_json(response)
 
     if json_text:

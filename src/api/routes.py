@@ -1,15 +1,27 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
-from src.api.schemas import AssetData
-from src.services.recommendation import generate_recommendation
+from http.client import HTTPException
+import os
+from fastapi import APIRouter, Depends, Header
+from src.api.schemas import *
+from services.server import generate_recommendation
 
 router = APIRouter()
 
-class RecommendationResponse(BaseModel):
-    recommendations: list[dict]
-    summary: str
+def validate_token(x_token: str = Header(...)) -> None:
+    if x_token != os.getenv("INTERNAL_API_KEY"):
+        raise HTTPException(status_code=401, detail="Invalid or missing token")
 
-@router.post("/rekomendasi", response_model=RecommendationResponse)
-async def get_recommendation(data: AssetData):
-    result = generate_recommendation(data)  # Hasil sudah dalam format dict
-    return result  # FastAPI akan otomatis mengonversi ke JSON
+# health check
+@router.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+# server
+server = APIRouter(prefix="/server", tags=["server"])
+
+server.post("/status", response_model=RecommendationResponse)
+async def get_recommendation(
+    data: ServerData,
+    token: None = Depends(validate_token)
+):
+    result = generate_recommendation(data) 
+    return result 

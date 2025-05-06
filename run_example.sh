@@ -1,4 +1,4 @@
-#!/bin/bash
+
 
 # Periksa apakah nodemon sudah terinstal
 if ! command -v nodemon &> /dev/null
