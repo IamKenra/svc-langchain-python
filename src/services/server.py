@@ -1,4 +1,4 @@
-from src.models.llm_client import llm_client
+from src.clients.llm_client import llm_client
 import logging
 import json
 import re

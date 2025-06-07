@@ -1,8 +1,8 @@
 from http.client import HTTPException
 import os
 from fastapi import APIRouter, Depends, Header
-from src.api.schemas import *
-from src.services.server import *
+from src.schemas.serverSchema import *
+from src.services.serverService import *
 
 router = APIRouter()
 
@@ -15,13 +15,14 @@ def validate_token(x_token: str = Header(...)) -> None:
 async def health_check():
     return {"status": "ok"}
 
-# server
 server = APIRouter(prefix="/server", tags=["server"])
 
-server.get("/status/rightnow", response_model=RecommendationResponse)
+@server.post("/status/rightnow", response_model=RecommendationResponse)
 async def recommendation(
-    data: ServerData,
+    data: ServerStatusInput,
     token: None = Depends(validate_token)
 ):
-    result = now_summary(data) 
+    result = generate_server_recommendation(data) 
     return result 
+
+router.include_router(server)
