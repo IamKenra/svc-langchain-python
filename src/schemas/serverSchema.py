@@ -6,6 +6,9 @@ class ServerStatusInput(BaseModel):
     ram: float
     disk: float
 
+class ServerStatusRightNow(BaseModel):
+    condition: str
+    
 class Recommendation(BaseModel):
     title: str
     description: str
