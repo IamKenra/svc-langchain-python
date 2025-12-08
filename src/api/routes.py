@@ -1,10 +1,11 @@
-from http.client import HTTPException
 import os
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
 from src.schemas.serverSchema import *
 from src.services.serverService import *
 from src.services.devicesService import *
 from src.schemas.deviceSchema import *
+from src.schemas.assignSchema import AssignRecommendationInput, AssignRecommendationOutput
+from src.services.assignService import assignRecommendationService
 
 router = APIRouter()
 
@@ -41,3 +42,17 @@ async def RouteDeviceRecommendation(
     return result
 
 router.include_router(device)
+
+# ====================== AI Router ======================
+ai = APIRouter(prefix="/ai", tags=["ai"])
+
+
+@ai.post("/assign", response_model=AssignRecommendationOutput)
+async def RouteAssignRecommendation(
+    data: AssignRecommendationInput, token: None = Depends(validate_token)
+):
+    toon = assignRecommendationService(data)
+    return AssignRecommendationOutput(toon_result=toon)
+
+
+router.include_router(ai)

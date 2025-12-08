@@ -22,6 +22,7 @@ deviceRecomendationTemplate = PromptTemplate(
     - Rekomendasi tidak memerlukan perangkat dengan usia terbaru atau spesifikasi tinggi jika tidak diperlukan.
 
     Gunakan bahasa indonesia yang baik dan benar.
+    Berikan Summarynya secara singkat, jelas dan insightfull.
     Pastikan setiap respon anda selalu **KONSISTEN SETIAP KALIMAT DAN KATA**.
     Anda cukup menganalisa pesan yang ini saja tidak perlu melihat pesan sebelumnya karena ini respon anda bersifat sekali pakai.
     {format_instructions}

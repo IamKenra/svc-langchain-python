@@ -7,24 +7,47 @@ from src.schemas.serverSchema import ServerStatusRightNow
 ParserStatusRightNow = PydanticOutputParser(pydantic_object=ServerStatusRightNow)
 
 StatusRightNowTemplate = PromptTemplate(
-    template="""
-    Statistik rata-rata performa server saat ini:
-    - Penggunaan CPU: {cpu}%
-    - Penggunaan RAM: {ram}%
-    - Penggunaan Disk: {disk}%
+     template="""
+    The current server average performance statistics right now are:
+    - CPUSage: {cpu}%
+    - RAM Usage: {ram}%
+    - Disk Usage: {disk}%
 
-    Anda adalah seorang ahli dalam mengelola inventaris IT di sebuah perusahaan besar. Berdasarkan data statistik diatas,
-    lakukan analisa mendalam dan jabarkan kondisi server saat ini. Berikan rekomendasi SECARA SINGKAT DAN INSIGHTFULL menggunakan bahasa indonesia yang baik dan benar.
-    Contoh Kondisi yang bisa diberikan adalah:
-    - Kondisi server saat ini baik, tidak ada masalah yang perlu diperhatikan.
-    - Kondisi server saat ini perlu perhatian pada penggunaan CPU yang tinggi.
-    - Kondisi server saat ini perlu pemantauan dan perhatian pada penggunaan CPU,RAM yang tinggi.
-    Pastikan setiap respon anda selalu **KONSISTEN SETIAP KALIMAT DAN KATA**.
-    Anda cukup menganalisa pesan yang ini saja tidak perlu melihat pesan sebelumnya karena ini respon anda bersifat sekali pakai.
+    You are an expert in managing IT inventory in a large company. Based on the above statistical data,
+    perform an in-depth analysis and describe the current server condition. Provide RECOMMENDATIONS BRIEFLY AND INSIGHTFULLY in good and correct Indonesian.
+    Examples of Conditions that can be given are:
+    - The current server condition is good, there are no issues to be concerned about.
+    - The current server condition needs attention to high CPU usage.
+    - The current server condition needs monitoring and attention to high CPU,RAM usage.
+    Make sure every response you give is always **CONSISTENT IN EVERY SENTENCE AND WORD**.
+    You only need to analyze this message alone without looking at previous messages as your response is one-time only.
+    {format_instructions}
+    """,
+   
+    input_variables=["cpu", "ram", "disk"],
+    partial_variables={"format_instructions": ParserStatusRightNow.get_format_instructions()}
+)
+
+PerdictiveMaintenance = PromptTemplate(
+    template="""
+    The current server average performance statistics right now are:
+    - CPUSage: {cpu}%
+    - RAM Usage: {ram}%
+    - Disk Usage: {disk}%
+
+    You are an expert in managing IT inventory in a large company. Based on the above statistical data,
+    perform an in-depth analysis and describe the current server condition. Provide RECOMMENDATIONS BRIEFLY AND INSIGHTFULLY in good and correct Indonesian.
+    Examples of Conditions that can be given are:
+    - The current server condition is good, there are no issues to be concerned about.
+    - The current server condition needs attention to high CPU usage.
+    - The current server condition needs monitoring and attention to high CPU,RAM usage.
+    Make sure every response you give is always **CONSISTENT IN EVERY SENTENCE AND WORD**.
+    You only need to analyze this message alone without looking at previous messages as your response is one-time only.
     {format_instructions}
     """,
     input_variables=["cpu", "ram", "disk"],
     partial_variables={"format_instructions": ParserStatusRightNow.get_format_instructions()}
 )
+
 
 StatusRightNow = StatusRightNowTemplate | llm_client | ParserStatusRightNow

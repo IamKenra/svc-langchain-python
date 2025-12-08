@@ -1,3 +1,6 @@
+#!/bin/bash
+export INTERNAL_API_KEY="dev-internal-api-key"
+
 # Periksa apakah nodemon sudah terinstal
 if ! command -v nodemon &> /dev/null
 then
@@ -12,5 +15,5 @@ if [ -n "$PID" ]; then
     kill -9 $PID
 fi
 
-echo "Menjalankan LangChain Service dengan Nodemon..."
-nodemon --exec "python3 -m uvicorn src.main:app --host 0.0.0.0 --port 3001 --reload"
+echo "Menjalankan LangChain Service dengan Nodemon pada port ${PORT}..."
+nodemon --exec "python3 -m uvicorn src.main:app --host 0.0.0.0 --port ${PORT} --reload"
