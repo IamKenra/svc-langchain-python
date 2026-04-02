@@ -6,6 +6,8 @@ from src.services.devicesService import *
 from src.schemas.deviceSchema import *
 from src.schemas.assignSchema import AssignRecommendationInput, AssignRecommendationOutput
 from src.services.assignService import assignRecommendationService
+from src.schemas.assetInsightSchema import AssetInsightInput, AssetInsightOutput
+from src.services.assetInsightService import assetInsightService
 
 router = APIRouter()
 
@@ -53,6 +55,20 @@ async def RouteAssignRecommendation(
 ):
     toon = assignRecommendationService(data)
     return AssignRecommendationOutput(toon_result=toon)
+
+
+@ai.post("/asset_insight", response_model=AssetInsightOutput)
+async def RouteAssetInsight(
+    data: AssetInsightInput, token: None = Depends(validate_token)
+):
+    """
+    Endpoint internal untuk menghasilkan AI Insight per asset.
+    Dipanggil oleh service Go dengan payload:
+    - domain: "ai"
+    - context_toon: string TOON
+    - asset_uuid: uuid asset (saat ini tidak digunakan langsung oleh chain)
+    """
+    return assetInsightService(data)
 
 
 router.include_router(ai)
