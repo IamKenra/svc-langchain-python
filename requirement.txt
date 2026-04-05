@@ -1,5 +1,7 @@
-uvicorn
-requests
 fastapi
-dotenv
-groq
+langchain==0.3.27
+langchain-core==0.3.79
+pydantic>=2,<3
+python-dotenv
+requests
+uvicorn

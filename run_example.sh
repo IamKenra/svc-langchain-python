@@ -4,7 +4,7 @@ export INTERNAL_API_KEY="dev-internal-api-key"
 # Periksa apakah nodemon sudah terinstal
 if ! command -v nodemon &> /dev/null
 then
-    echo "Nodemon tidak ditemukan, menginstalnya sekarang..."
+    echo "Nodemon not found, installing now.."
     npm install -g nodemon
 fi
 

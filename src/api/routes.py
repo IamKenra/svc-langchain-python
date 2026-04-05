@@ -1,11 +1,19 @@
 import os
-from fastapi import APIRouter, Depends, Header, HTTPException
+from typing import Union
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from src.schemas.serverSchema import *
 from src.services.serverService import *
 from src.services.devicesService import *
 from src.schemas.deviceSchema import *
 from src.schemas.assignSchema import AssignRecommendationInput, AssignRecommendationOutput
 from src.services.assignService import assignRecommendationService
+from src.schemas.assetHealthSchema import (
+    AssetHealthHighRiskOutput,
+    AssetHealthInput,
+    AssetHealthLowRiskOutput,
+)
+from src.services.assetHealthService import assetHealthService
 from src.schemas.assetInsightSchema import AssetInsightInput, AssetInsightOutput
 from src.services.assetInsightService import assetInsightService
 
@@ -69,6 +77,24 @@ async def RouteAssetInsight(
     - asset_uuid: uuid asset (saat ini tidak digunakan langsung oleh chain)
     """
     return assetInsightService(data)
+
+@ai.post(
+    "/asset/health",
+    response_model=Union[AssetHealthHighRiskOutput, AssetHealthLowRiskOutput],
+)
+async def RouteAssetHealth(
+    data: AssetHealthInput,
+    type: str = Query(...),
+    token: None = Depends(validate_token),
+):
+    health_type = type.strip().lower()
+    if health_type not in ("high", "low"):
+        raise HTTPException(
+            status_code=400,
+            detail="query parameter 'type' must be 'high' or 'low'",
+        )
+
+    return assetHealthService(data, health_type)
 
 
 router.include_router(ai)
