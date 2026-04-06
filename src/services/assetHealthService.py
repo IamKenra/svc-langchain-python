@@ -1,7 +1,10 @@
 import json
 import logging
 import re
+from datetime import datetime, timezone
+from time import perf_counter
 from typing import Any, Dict, List, Union, cast
+from uuid import uuid4
 
 from src.chains.assetHealthChain import (
     assetHealthHighRiskChain,
@@ -17,6 +20,18 @@ from src.schemas.assetHealthSchema import (
 logger = logging.getLogger(__name__)
 
 ALLOWED_FINAL_STATUS = {"HEALTHY", "WARNING", "CRITICAL"}
+healthFallbackTopFactor = "LLM_PARSE_FALLBACK_INVALID_JSON"
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _resolve_request_id(request_id: Union[str, None]) -> str:
+    cleaned = (request_id or "").strip()
+    if cleaned:
+        return cleaned
+    return f"lc-{uuid4()}"
 
 
 def _clamp_0_100(value: Any, field_name: str) -> float:
@@ -75,6 +90,21 @@ def _extract_json_payload(raw_result: str) -> Dict[str, Any]:
     return cast(Dict[str, Any], payload)
 
 
+def _extract_numeric_score(text: str) -> Union[float, None]:
+    for pattern in (
+        r"(?:lifecycle_score|final_health_score|score)\s*[:=]\s*(\d{1,3}(?:\.\d+)?)",
+        r"(\d{1,3}(?:\.\d+)?)",
+    ):
+        match = re.search(pattern, text, re.IGNORECASE)
+        if not match:
+            continue
+        try:
+            return _clamp_0_100(match.group(1), "score")
+        except ValueError:
+            continue
+    return None
+
+
 def _status_from_score(score: float) -> str:
     if score >= 80:
         return "HEALTHY"
@@ -116,21 +146,91 @@ def _build_low_response(payload: Dict[str, Any]) -> AssetHealthLowRiskOutput:
     )
 
 
+def _build_high_fallback_response(raw_result: str) -> AssetHealthHighRiskOutput:
+    score = _extract_numeric_score(raw_result)
+    if score is None:
+        score = 60.0
+
+    return AssetHealthHighRiskOutput(
+        lifecycle_score=score,
+        confidence=0.0,
+        top_factors=[healthFallbackTopFactor],
+    )
+
+
+def _build_low_fallback_response(raw_result: str) -> AssetHealthLowRiskOutput:
+    score = _extract_numeric_score(raw_result)
+    if score is None:
+        score = 60.0
+
+    return AssetHealthLowRiskOutput(
+        final_health_status=_status_from_score(score),
+        final_health_score=score,
+        confidence=0.0,
+        top_factors=[healthFallbackTopFactor],
+    )
+
+
 def assetHealthService(
-    data: AssetHealthInput, health_type: AssetHealthType
+    data: AssetHealthInput,
+    health_type: AssetHealthType,
+    request_id: Union[str, None] = None,
+    endpoint: str = "/ai/asset/health",
 ) -> Union[AssetHealthHighRiskOutput, AssetHealthLowRiskOutput]:
-    logger.info("Generating asset health via LLM (type=%s, asset_uuid=%s)", health_type, data.asset_uuid)
+    resolved_request_id = _resolve_request_id(request_id)
+    started_at = perf_counter()
+    logger.info(
+        "asset_health request started ts=%s request_id=%s endpoint=%s type=%s asset_uuid=%s",
+        _utc_now_iso(),
+        resolved_request_id,
+        endpoint,
+        health_type,
+        data.asset_uuid,
+    )
 
     chain = assetHealthHighRiskChain if health_type == "high" else assetHealthLowRiskChain
 
-    result = chain.invoke({"context_toon": data.context_toon})
-    if not isinstance(result, str):
-        logger.warning("LLM result is not a string, casting to str")
-        result = str(result)
+    result = ""
+    used_fallback = False
+    try:
+        result_raw = chain.invoke({"context_toon": data.context_toon})
+        if not isinstance(result_raw, str):
+            logger.warning("LLM result is not a string, casting to str")
+            result = str(result_raw)
+        else:
+            result = result_raw
 
-    payload = _extract_json_payload(result)
+        payload = _extract_json_payload(result)
+        if health_type == "high":
+            response = _build_high_response(payload)
+        else:
+            response = _build_low_response(payload)
+    except Exception as exc:
+        used_fallback = True
+        logger.warning(
+            "asset_health parse failed ts=%s request_id=%s endpoint=%s type=%s asset_uuid=%s err=%s",
+            _utc_now_iso(),
+            resolved_request_id,
+            endpoint,
+            health_type,
+            data.asset_uuid,
+            str(exc),
+        )
+        if health_type == "high":
+            response = _build_high_fallback_response(result)
+        else:
+            response = _build_low_fallback_response(result)
 
-    if health_type == "high":
-        return _build_high_response(payload)
+    latency_ms = int((perf_counter() - started_at) * 1000)
+    logger.info(
+        "asset_health request finished ts=%s request_id=%s endpoint=%s type=%s asset_uuid=%s fallback=%s latency_ms=%d",
+        _utc_now_iso(),
+        resolved_request_id,
+        endpoint,
+        health_type,
+        data.asset_uuid,
+        str(used_fallback).lower(),
+        latency_ms,
+    )
 
-    return _build_low_response(payload)
+    return response

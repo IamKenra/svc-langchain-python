@@ -1,7 +1,7 @@
 import os
 from typing import Union
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from src.schemas.serverSchema import *
 from src.services.serverService import *
 from src.services.devicesService import *
@@ -118,8 +118,10 @@ async def RouteAssetInsight(
     response_model=Union[AssetHealthHighRiskOutput, AssetHealthLowRiskOutput],
 )
 async def RouteAssetHealth(
+    request: Request,
     data: AssetHealthInput,
     type: str = Query(...),
+    x_request_id: Union[str, None] = Header(default=None, alias="X-Request-ID"),
     token: None = Depends(validate_token),
 ):
     health_type = type.strip().lower()
@@ -129,7 +131,12 @@ async def RouteAssetHealth(
             detail="query parameter 'type' must be 'high' or 'low'",
         )
 
-    return assetHealthService(data, health_type)
+    return assetHealthService(
+        data,
+        health_type,
+        request_id=x_request_id,
+        endpoint=str(request.url.path),
+    )
 
 
 router.include_router(ai)
