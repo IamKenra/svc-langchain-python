@@ -1,20 +1,42 @@
 import logging
+from typing import Optional
 
-from src.chains.assetInsightChain import assetInsightChain
+from src.chains.assetInsightChain import getAssetInsightChain
 from src.schemas.assetInsightSchema import AssetInsightInput, AssetInsightOutput
 
 logger = logging.getLogger(__name__)
 
 
-def assetInsightService(data: AssetInsightInput) -> AssetInsightOutput:
-    logger.info("Generating asset insight via LLM")
+def infer_insight_type_from_context(context_toon: str) -> str:
+    lowered = (context_toon or "").lower()
+
+    # Backend baru mengirimkan blok insight_context/insight_constraints
+    # agar service bisa memilih prompt non-monitoring secara eksplisit.
+    if "monitoring_capability: non_monitoring" in lowered:
+        return "non_monitoring"
+    if "insight_mode: non_monitoring" in lowered:
+        return "non_monitoring"
+
+    return "monitoring"
+
+
+def assetInsightService(data: AssetInsightInput, insight_type: Optional[str] = None) -> AssetInsightOutput:
+    resolved_type = (insight_type or "").strip().lower()
+    if resolved_type == "":
+        resolved_type = infer_insight_type_from_context(data.context_toon)
+
+    if resolved_type not in ("monitoring", "non_monitoring"):
+        raise ValueError("insight_type must be 'monitoring' or 'non_monitoring'")
+
+    logger.info("Generating asset insight via LLM type=%s", resolved_type)
     logger.info(
         "assetInsightService: context_toon preview: %s",
         (data.context_toon[:200] + "...") if len(data.context_toon) > 200 else data.context_toon,
     )
 
     try:
-        result = assetInsightChain.invoke(
+        chain = getAssetInsightChain(resolved_type)
+        result = chain.invoke(
             {
                 "context_toon": data.context_toon,
             }
