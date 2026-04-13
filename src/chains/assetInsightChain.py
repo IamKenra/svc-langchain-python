@@ -47,12 +47,14 @@ Context (TOON):
 {context_toon}
 
 Your task:
-- Explain the current condition using maintenance history, known issues, alerts, and health snapshot.
+- Explain the current condition using maintenance history, known issues, and health snapshot.
 - Provide short predictive maintenance insight based on lifecycle signal (ageing, repeated issue, maintenance pattern).
 - Provide concrete, actionable recommendations.
 
 Critical constraints:
 - This is NON-MONITORING mode.
+- Use asset identity only from context: device, brand, and model.
+- Do NOT mention any other device/merek/model that is not present in context.
 - Do NOT mention CPU, RAM, Disk, Network, throughput, or telemetry percentages.
 - If monitoring metrics are not available, never infer compute telemetry values.
 
